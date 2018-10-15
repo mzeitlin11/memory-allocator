@@ -1,0 +1,64 @@
+a.
+
+If myfree() is called on an address that did not originate from myalloc(),
+then my allocator yields a segmentation fault.
+
+If myfree() is called on an address contained within a memory block returned
+by myalloc(), my allocator yields a segmentation fault.
+
+If myfree() tries to free an address which has already been freed, nothing
+obvious happens. However, memory utilization decreases, which is unsurprising
+since a block of memory with positive header and footer (signifying being
+unallocated) is now turned negative (signifying allocation), even though
+myalloc() never allocates this memory. Thus, this block can never be freed,
+so it essentially results in the permanent loss of a memory block.
+
+b.
+
+If myfree() is called on an address that did not originate from myalloc(),
+an error message should report that myfree() was called on an address outside
+the memory pool and terminate, identifying the offending myfree() call.
+Such a response can be implemented with a simple check that
+each address to be freed is greater than the address of the
+pointer to the start of the memory block (mem) and less than the address
+of the pointer to the end of the memory block (end). If the pointer fails
+either of these checks, the program will report an error message identifying
+the offending myfree() call and terminate.
+
+
+If myfree() is called on an address contained within a memory block returned
+by myalloc(), an error message should report that myfree() was called on an
+address contained within a memory block and terminate, identifying the offending
+myfree() call. This could be implemented with the following check:
+
+Decrement the pointer by sizeof(int) bytes (so it points to what should be
+the header to that block.)
+
+Deference to record the size given inside the header.
+
+Use that size to move the pointer to what should be the proper footer, ensuring
+that the resulting address is still within the start and end address of the
+entire memory block.
+
+Deference and check that the size contained in the footer matches that given
+by the header.
+
+If the check fails, then clearly the pointer was not a valid pointer to the
+payload of a block of memory, because in that case the header and footer
+sizes should have agreed. If the check succeeds, the pointer must be valid
+because the chance of a false positive is roughly (1 / 2 ^ 32) because it
+would require two random 4-byte (32-bit) region accessed to have the same
+exact bits (so that the deferenced values would agree.)
+
+If the pointer given by myfree() fails this check, the program will report an
+error message identifying the offending myfree() call and terminate.
+
+
+If myfree() is called on an address that has already been freed, an error
+message will report that myfree() was called on an address pointing to the
+payload of a memory block already freed and terminate, identifying the
+offending myfree() call. This should be implemented through a check
+that the header of the memory block to be freed has a negative size (allocated,
+can be freed) or positive (unallocated, should not be freed.). If the check
+fails (the header has a positive size), the program will report an error message
+identifying the offending myfree() call and terminate.
